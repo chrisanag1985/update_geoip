@@ -1,0 +1,40 @@
+#!/bin/bash
+
+URL='https://geolite.maxmind.com/download/geoip/database/'
+HOME_PATH='/home/chris/'
+DIR_NAME='geoip'
+WIRESHARK_PATH=$HOME_PATH'.config/wireshark/'$DIR_NAME
+
+rename_dirs(){
+
+	for dir in `ls $WIRESHARK_PATH`;do
+		echo $dir
+		if [ -d $WIRESHARK_PATH'/'$dir ]; then
+			NEW_NAME=$( echo $dir | cut -f1 -d'_')
+			mv $WIRESHARK_PATH'/'$dir $WIRESHARK_PATH'/'$NEW_NAME
+		fi
+	done
+}
+
+
+if [[ ! -d $WIRESHARK_PATH  ]]; then
+	mkdir $WIRESHARK_PATH	
+fi
+
+#if the md5 of the files are exist check them
+
+for file in GeoLite2-City GeoLite2-Country GeoLite2-ASN;do
+	echo $file;
+	if [[ -f $WIRESHARK_PATH'/'$file'.md5' ]]; then
+		echo "File Exists!!!";
+#	else
+#		echo "File Does Not exists!!!";
+#		curl $URL$file'.tar.gz' -o $WIRESHARK_PATH'/'$file'.tar.gz'
+#		curl $URL$file'.tar.gz.md5' -o $WIRESHARK_PATH'/'$file'.md5'
+#		tar xvzf $WIRESHARK_PATH'/'$file'.tar.gz' -C $WIRESHARK_PATH
+#               rename_dirs
+	fi
+done
+
+
+
