@@ -5,36 +5,74 @@ HOME_PATH='/home/chris/'
 DIR_NAME='geoip'
 WIRESHARK_PATH=$HOME_PATH'.config/wireshark/'$DIR_NAME
 
+
+download_files(){
+
+		curl $URL$file'.tar.gz' -o $WIRESHARK_PATH'/'$file'.tar.gz'
+		curl $URL$file'.tar.gz.md5' -o $WIRESHARK_PATH'/'$file'.md5'
+		TEMP_TAR=$(md5sum $WIRESHARK_PATH'/'$file'.tar.gz'| cut -f1 -d' ')
+		TEMP_MD5=$(cat $WIRESHARK_PATH'/'$file'.md5')
+		if [ "$TEMP_TAR" == "$TEMP_MD5" ];then
+			tar xvzf $WIRESHARK_PATH'/'$file'.tar.gz' -C $WIRESHARK_PATH
+		else
+			echo "[!!] No Matching Hashes..."
+			exit
+		fi
+}
+
+
+
+
+
 rename_dirs(){
 
-	for dir in `ls $WIRESHARK_PATH`;do
-		echo $dir
-		if [ -d $WIRESHARK_PATH'/'$dir ]; then
-			NEW_NAME=$( echo $dir | cut -f1 -d'_')
-			mv $WIRESHARK_PATH'/'$dir $WIRESHARK_PATH'/'$NEW_NAME
+	for dir in `find $WIRESHARK_PATH -type d -iname 'GeoLite2*_*'`;do
+		if [[ -d $dir ]]; then
+			NEW_NAME=$( basename -- $dir | cut -f1 -d'_')
+			if [[ -d $WIRESHARK_PATH'/'$NEW_NAME ]];then 
+				rm -rf $WIRESHARK_PATH'/'$NEW_NAME
+			fi
+			mv $dir $WIRESHARK_PATH'/'$NEW_NAME
 		fi
 	done
 }
 
 
 if [[ ! -d $WIRESHARK_PATH  ]]; then
+	echo "[+] Creating Directory..."
 	mkdir $WIRESHARK_PATH	
 fi
 
 #if the md5 of the files are exist check them
 
 for file in GeoLite2-City GeoLite2-Country GeoLite2-ASN;do
-	echo $file;
-	if [[ -f $WIRESHARK_PATH'/'$file'.md5' ]]; then
-		echo "File Exists!!!";
-#	else
-#		echo "File Does Not exists!!!";
-#		curl $URL$file'.tar.gz' -o $WIRESHARK_PATH'/'$file'.tar.gz'
-#		curl $URL$file'.tar.gz.md5' -o $WIRESHARK_PATH'/'$file'.md5'
-#		tar xvzf $WIRESHARK_PATH'/'$file'.tar.gz' -C $WIRESHARK_PATH
-#               rename_dirs
+	echo "============================"
+	echo "[+] Folder:  "$file;
+	if [[ -d $WIRESHARK_PATH'/'$file ]]; then
+		echo "[+] Folder Exists!!!";
+		curl $URL$file'.tar.gz.md5' -o $WIRESHARK_PATH'/'$file'_new.md5'
+		TEMP_OLD=$(cat $WIRESHARK_PATH'/'$file'.md5')
+		TEMP_NEW=$(cat $WIRESHARK_PATH'/'$file'_new.md5')
+		if [ "$TEMP_OLD" != "$TEMP_NEW" ];then
+			echo "[+] Updating File!!!"
+			download_files
+			rename_dirs
+		else
+			echo "[+] Didn't change!!!"
+		fi
+
+	else
+		echo "[!!] Folder Does Not exists!!!";
+		download_files
+		rename_dirs
 	fi
 done
+cat << END
 
+Check your Wireshark Configuration that you have include these folders
+
+Edit -> Preferences -> Name Resolution -> MaxMind database directories -> Edit
+
+END
 
 
